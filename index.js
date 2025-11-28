@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const axios = require("axios");
 const cors = require("cors");
 
 const app = express();
@@ -28,13 +29,36 @@ app.post("/stock-assistant", async (req, res) => {
   }
   
   try {
-    // For now, return a mock response to test the server
-    const mockAnswer = `A stock is a share of ownership in a company. When you buy a stock, you own a small piece of that company. Stock prices go up and down based on how well the company is doing and what people think it's worth. Investors buy stocks hoping the price will go up so they can make money.`;
+    console.log("Calling Hugging Face API...");
     
-    res.json({ answer: mockAnswer });
+    // Create a focused prompt for stock market education
+    const prompt = `You are a helpful stock market teacher for beginners. Answer this question clearly and educationally. Do not give personalized investment advice.\n\nQuestion: ${question}\n\nAnswer:`;
+    
+    const huggingfaceRes = await axios.post(
+      "https://api-inference.huggingface.co/models/google/flan-t5-large",
+      {
+        inputs: prompt,
+        parameters: {
+          max_length: 200,
+          temperature: 0.7
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${HUGGINGFACE_API_KEY}`
+        },
+        timeout: 30000
+      }
+    );
+
+    let answer = huggingfaceRes.data[0]?.generated_text || "I'm sorry, I couldn't generate a response. Please try again.";
+    
+    console.log("Got response from Hugging Face");
+    res.json({ answer });
   } catch (err) {
     console.error("ERROR:", err.message);
-    res.status(500).json({ answer: "Error: " + err.message });
+    // Fallback response
+    res.json({ answer: "A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time." });
   }
 });
 
