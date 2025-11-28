@@ -35,6 +35,7 @@ app.post("/stock-assistant", async (req, res) => {
   
   try {
     console.log("Calling Hugging Face Router API...");
+    console.log("API Key:", HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : "MISSING");
     
     // Use the new HF Router endpoint with OpenAI-compatible format
     const huggingfaceRes = await axios.post(
@@ -63,7 +64,12 @@ app.post("/stock-assistant", async (req, res) => {
       }
     );
 
-    console.log("HF Router response data:", huggingfaceRes.data);
+    console.log("HF status:", huggingfaceRes.status);
+    console.log("HF data:", JSON.stringify(huggingfaceRes.data, null, 2));
+    
+    if (huggingfaceRes.status !== 200) {
+      throw new Error(`HF error ${huggingfaceRes.status}: ${JSON.stringify(huggingfaceRes.data)}`);
+    }
     
     const answer = huggingfaceRes.data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
     
@@ -71,7 +77,9 @@ app.post("/stock-assistant", async (req, res) => {
     res.json({ answer });
   } catch (err) {
     console.error("ERROR:", err.message);
-    console.error("Full error:", err.response?.data || err);
+    console.error("Response status:", err.response?.status);
+    console.error("Response data:", JSON.stringify(err.response?.data, null, 2));
+    console.error("Full error:", err);
     // Fallback response with the actual question context
     res.json({ answer: `Regarding "${question}": A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time.` });
   }
