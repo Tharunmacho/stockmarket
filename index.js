@@ -21,8 +21,11 @@ app.get("/health", (req, res) => {
 });
 
 app.post("/stock-assistant", async (req, res) => {
-  const question = req.body.question || "";
-  console.log("Received question:", question);
+  // Accept question from body or query parameter
+  const question = req.body.question || req.query.question || "";
+  console.log("Received question from Zoho:", question);
+  console.log("Request body:", req.body);
+  console.log("Request query:", req.query);
   
   if (!question) {
     return res.status(400).json({ answer: "Question is required" });
@@ -53,12 +56,13 @@ app.post("/stock-assistant", async (req, res) => {
 
     let answer = huggingfaceRes.data[0]?.generated_text || "I'm sorry, I couldn't generate a response. Please try again.";
     
-    console.log("Got response from Hugging Face");
+    console.log("Got response from Hugging Face:", answer);
     res.json({ answer });
   } catch (err) {
     console.error("ERROR:", err.message);
-    // Fallback response
-    res.json({ answer: "A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time." });
+    console.error("Full error:", err);
+    // Fallback response with the actual question context
+    res.json({ answer: `Regarding "${question}": A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time.` });
   }
 });
 
