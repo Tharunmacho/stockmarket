@@ -37,11 +37,11 @@ app.post("/stock-assistant", async (req, res) => {
     console.log("Calling Hugging Face Router API...");
     console.log("API Key:", HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : "MISSING");
     
-    // Use the new HF Router endpoint with OpenAI-compatible format
+    // Use HF Router with gpt-4o-mini alias (router-compatible model)
     const huggingfaceRes = await axios.post(
       "https://router.huggingface.co/openai/v1/chat/completions",
       {
-        model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        model: "gpt-4o-mini",
         messages: [
           { 
             role: "system", 
