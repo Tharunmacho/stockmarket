@@ -34,19 +34,26 @@ app.post("/stock-assistant", async (req, res) => {
   }
   
   try {
-    console.log("Calling Hugging Face Inference API...");
-    console.log("API Key:", HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : "MISSING");
+    console.log("Calling Hugging Face Router API...");
+    console.log("Question:", question);
     
-    // Use free Inference API with Qwen model (reliable and fast)
+    // Use HF Router with chat completions endpoint
     const huggingfaceRes = await axios.post(
-      "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-Coder-32B-Instruct",
+      "https://router.huggingface.co/models/meta-llama/Llama-3.2-3B-Instruct/v1/chat/completions",
       {
-        inputs: `You are a helpful stock market teacher for beginners. Answer this question clearly and educationally. Do not give personalized investment advice.\n\nQuestion: ${question}\n\nAnswer:`,
-        parameters: {
-          max_new_tokens: 200,
-          temperature: 0.7,
-          return_full_text: false
-        }
+        model: "meta-llama/Llama-3.2-3B-Instruct",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a helpful stock market teacher for beginners. Answer questions clearly and educationally. Do not give personalized investment advice."
+          },
+          { 
+            role: "user", 
+            content: question
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.7
       },
       {
         headers: {
@@ -60,11 +67,7 @@ app.post("/stock-assistant", async (req, res) => {
     console.log("HF status:", huggingfaceRes.status);
     console.log("HF data:", JSON.stringify(huggingfaceRes.data, null, 2));
     
-    if (huggingfaceRes.status !== 200) {
-      throw new Error(`HF error ${huggingfaceRes.status}: ${JSON.stringify(huggingfaceRes.data)}`);
-    }
-    
-    const answer = huggingfaceRes.data[0]?.generated_text || "I'm sorry, I couldn't generate a response. Please try again.";
+    const answer = huggingfaceRes.data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
     
     console.log("Generated answer:", answer);
     res.json({ answer });
@@ -72,7 +75,7 @@ app.post("/stock-assistant", async (req, res) => {
     console.error("ERROR:", err.message);
     console.error("Response status:", err.response?.status);
     console.error("Response data:", JSON.stringify(err.response?.data, null, 2));
-    console.error("Full error:", err);
+    
     // Fallback response with the actual question context
     res.json({ answer: `Regarding "${question}": A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time.` });
   }
