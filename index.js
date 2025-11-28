@@ -34,26 +34,19 @@ app.post("/stock-assistant", async (req, res) => {
   }
   
   try {
-    console.log("Calling Hugging Face Router API...");
+    console.log("Calling Hugging Face Inference API...");
     console.log("API Key:", HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : "MISSING");
     
-    // Use HF Router with gpt-4o-mini alias (router-compatible model)
+    // Use free Inference API with Qwen model (reliable and fast)
     const huggingfaceRes = await axios.post(
-      "https://router.huggingface.co/openai/v1/chat/completions",
+      "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-Coder-32B-Instruct",
       {
-        model: "gpt-4o-mini",
-        messages: [
-          { 
-            role: "system", 
-            content: "You are a helpful stock market teacher for beginners. Answer questions clearly and educationally. Do not give personalized investment advice."
-          },
-          { 
-            role: "user", 
-            content: question
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.7
+        inputs: `You are a helpful stock market teacher for beginners. Answer this question clearly and educationally. Do not give personalized investment advice.\n\nQuestion: ${question}\n\nAnswer:`,
+        parameters: {
+          max_new_tokens: 200,
+          temperature: 0.7,
+          return_full_text: false
+        }
       },
       {
         headers: {
@@ -71,7 +64,7 @@ app.post("/stock-assistant", async (req, res) => {
       throw new Error(`HF error ${huggingfaceRes.status}: ${JSON.stringify(huggingfaceRes.data)}`);
     }
     
-    const answer = huggingfaceRes.data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
+    const answer = huggingfaceRes.data[0]?.generated_text || "I'm sorry, I couldn't generate a response. Please try again.";
     
     console.log("Generated answer:", answer);
     res.json({ answer });
