@@ -34,35 +34,44 @@ app.post("/stock-assistant", async (req, res) => {
   }
   
   try {
-    console.log("Calling Hugging Face API...");
+    console.log("Calling Hugging Face Router API...");
     
-    // Create a focused prompt for stock market education
-    const prompt = `You are a helpful stock market teacher for beginners. Answer this question clearly and educationally. Do not give personalized investment advice.\n\nQuestion: ${question}\n\nAnswer:`;
-    
+    // Use the new HF Router endpoint with OpenAI-compatible format
     const huggingfaceRes = await axios.post(
-      "https://api-inference.huggingface.co/models/google/flan-t5-large",
+      "https://router.huggingface.co/openai/v1/chat/completions",
       {
-        inputs: prompt,
-        parameters: {
-          max_length: 200,
-          temperature: 0.7
-        }
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a helpful stock market teacher for beginners. Answer questions clearly and educationally. Do not give personalized investment advice."
+          },
+          { 
+            role: "user", 
+            content: question
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.7
       },
       {
         headers: {
-          Authorization: `Bearer ${HUGGINGFACE_API_KEY}`
+          Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
+          "Content-Type": "application/json"
         },
         timeout: 30000
       }
     );
 
-    let answer = huggingfaceRes.data[0]?.generated_text || "I'm sorry, I couldn't generate a response. Please try again.";
+    console.log("HF Router response data:", huggingfaceRes.data);
     
-    console.log("Got response from Hugging Face:", answer);
+    const answer = huggingfaceRes.data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
+    
+    console.log("Generated answer:", answer);
     res.json({ answer });
   } catch (err) {
     console.error("ERROR:", err.message);
-    console.error("Full error:", err);
+    console.error("Full error:", err.response?.data || err);
     // Fallback response with the actual question context
     res.json({ answer: `Regarding "${question}": A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time.` });
   }
