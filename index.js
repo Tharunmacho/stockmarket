@@ -5,6 +5,8 @@ const cors = require("cors");
 
 const app = express();
 app.use(cors());
+// Add both parsers for maximum compatibility
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
