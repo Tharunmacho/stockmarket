@@ -29,8 +29,8 @@ app.post("/stock-assistant", async (req, res) => {
   console.log("Request query:", JSON.stringify(req.query, null, 2));
   console.log("Content-Type:", req.get("Content-Type"));
   
-  // Accept question from body or query parameter
-  const question = req.body.question || req.query.question || "";
+  // Accept question from body, query, or headers (Zoho sometimes sends in headers)
+  const question = req.body.question || req.query.question || req.headers.question || "";
   console.log("Extracted question:", question);
   
   if (!question) {
