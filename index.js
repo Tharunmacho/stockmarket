@@ -23,16 +23,37 @@ app.get("/health", (req, res) => {
 });
 
 app.post("/stock-assistant", async (req, res) => {
+  console.log("=== NEW REQUEST ===");
+  console.log("Request headers:", JSON.stringify(req.headers, null, 2));
+  console.log("Request body:", JSON.stringify(req.body, null, 2));
+  console.log("Request query:", JSON.stringify(req.query, null, 2));
+  console.log("Content-Type:", req.get("Content-Type"));
+  
   // Accept question from body or query parameter
   const question = req.body.question || req.query.question || "";
-  console.log("Received question from Zoho:", question);
-  console.log("Request body:", req.body);
-  console.log("Request query:", req.query);
+  console.log("Extracted question:", question);
   
   if (!question) {
-    return res.status(400).json({ answer: "Question is required" });
+    console.log("ERROR: No question provided");
+    return res.status(400).json({ answer: "Question is required", debug: { body: req.body, query: req.query } });
   }
   
+  // Temporary test response to verify connection
+  console.log("Sending test response with question:", question);
+  return res.json({ 
+    answer: `Test successful! You asked: "${question}"`,
+    gotQuestion: question,
+    timestamp: new Date().toISOString()
+  });
+  // Temporary test response to verify connection
+  console.log("Sending test response with question:", question);
+  return res.json({ 
+    answer: `Test successful! You asked: "${question}"`,
+    gotQuestion: question,
+    timestamp: new Date().toISOString()
+  });
+  
+  /* COMMENTED OUT FOR TESTING - RE-ENABLE AFTER ZOHO CONNECTION WORKS
   try {
     console.log("Calling Hugging Face Router API...");
     console.log("Question:", question);
@@ -79,6 +100,7 @@ app.post("/stock-assistant", async (req, res) => {
     // Fallback response with the actual question context
     res.json({ answer: `Regarding "${question}": A stock represents ownership in a company. When you buy stock, you own a small piece of that company. Stock prices fluctuate based on company performance and market conditions. Investors buy stocks hoping their value will increase over time.` });
   }
+  */
 });
 
 const PORT = process.env.PORT || 4000;
